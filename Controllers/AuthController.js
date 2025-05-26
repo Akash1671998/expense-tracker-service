@@ -14,7 +14,20 @@ const signup = async (req, res) => {
           success: false,
         });
     }
-    const userModel = new UserModel({ name, email, password });
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const token = jwt.sign(
+      { email, name },
+      process.env.JWT_SECRET,
+      { expiresIn: "24h" }
+    );
+    const userModel = new UserModel({
+      name,
+      email,
+      password: hashedPassword,
+      token,
+      role: "user"
+    });
     userModel.password = await bcrypt.hash(password, 10);
     await userModel.save();
     res.status(201).json({
@@ -30,11 +43,10 @@ const signup = async (req, res) => {
 };
 
 const login = async (req, res) => {
-  console.log("user details ", req.body);
   try {
-    const { email, password,_id } = req.body;
+    const { email, password } = req.body;
     const user = await UserModel.findOne({ email });
-    const errorMsg = "Auth failed email or password is wrong";
+    const errorMsg = "Auth failed: email or password is wrong";
     if (!user) {
       return res.status(403).json({ message: errorMsg, success: false });
     }
@@ -42,18 +54,19 @@ const login = async (req, res) => {
     if (!isPassEqual) {
       return res.status(403).json({ message: errorMsg, success: false });
     }
-    const jwtToken = jwt.sign(
+    const token = jwt.sign(
       { email: user.email, _id: user._id },
       process.env.JWT_SECRET,
       { expiresIn: "24h" }
     );
-
     res.status(200).json({
-      message: "Login Success",
+      message: "Login successful",
       success: true,
-      jwtToken,
-      email,
-      name: user.name,
+      data: {
+        token,
+        email: user.email,
+        name: user.name,
+      },
     });
   } catch (err) {
     console.error("Login error:", err);
@@ -63,6 +76,7 @@ const login = async (req, res) => {
     });
   }
 };
+
 
 module.exports = {
   signup,

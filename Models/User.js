@@ -14,6 +14,7 @@ const UserSchema = new Schema({
   role: {
     type: String,
     require: true,
+    default: "user",
   },
   password: {
     type: String,
@@ -35,7 +36,8 @@ const UserSchema = new Schema({
       },
     },
   ],
-});
+},
+{ timestamps: true });
 
 const UserModel = mongoose.model("m_user", UserSchema);
 module.exports = UserModel;
