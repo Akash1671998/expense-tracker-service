@@ -42,8 +42,9 @@ const login = async (req, res) => {
   try {
     debugger
     const { email, password } = req.body;
-    console.log("req.bodyreq.bodyreq.body",req.body)
-    const user = await UserModel.findOne({ email });
+     const user = await UserModel.findOne({
+      $or: [{ email }, { name: email }],
+    });
     const errorMsg = "Auth failed: email or password is wrong";
     if (!user) {
       return res.status(403).json({ message: errorMsg, success: false });
@@ -78,7 +79,39 @@ const login = async (req, res) => {
   }
 };
 
+
+const changePassword = async (req, res) => {
+  try {
+    const { email, oldPassword, newPassword } = req.body;
+    const user = await UserModel.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found", success: false });
+    }
+
+    const isOldPasswordCorrect = await bcrypt.compare(oldPassword, user.password);
+    if (!isOldPasswordCorrect) {
+      return res.status(403).json({ message: "Old password is incorrect", success: false });
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedNewPassword;
+    await user.save();
+
+    res.status(200).json({
+      message: "Password changed successfully",
+      success: true,
+    });
+  } catch (err) {
+    console.error("Change password error:", err);
+    res.status(500).json({
+      message: "Internal server error",
+      success: false,
+    });
+  }
+};
+
 module.exports = {
   signup,
   login,
+  changePassword
 };
