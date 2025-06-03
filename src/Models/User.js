@@ -30,10 +30,14 @@ const UserSchema = new Schema({
         type: Number,
         require: true,
       },
+      createdBy:{
+        type:String,
+      },
       createAt: {
         type: Date,
         default: Date.now,
-      },
+      }
+     
     },
   ],
 },

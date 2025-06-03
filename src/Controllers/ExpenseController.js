@@ -1,5 +1,6 @@
 const express = require("express");
 const UserModel = require("../Models/User");
+const sendEmail = require("../Email");
 
 const fetchExpenses = async (req, res) => {
   const body = req.body;
@@ -19,25 +20,35 @@ const fetchExpenses = async (req, res) => {
     });
   }
 };
-
 const addExpenses = async (req, res) => {
-
   const body = req.body;
   const LogUser = req.user._id;
-  console.log("LogUser", LogUser);
+  const LogEmail = req.user.email;
+  const LogUserName = req.user.email;
+
   try {
+    const newExpense = {
+      ...body,
+      createdBy: LogUserName,
+    };
+
     const userData = await UserModel.findByIdAndUpdate(
       LogUser,
       {
-        $push: { expense: body },
+        $push: { expense: newExpense },
       },
       { new: true }
     );
-    return res.status(200).json({
+    res.status(200).json({
       message: "Expense Add Successfully",
       success: true,
       data: userData?.expense,
     });
+    sendEmail(
+      LogEmail,
+      "New Expense Added",
+      `You have successfully added a new expense to your account:\n\nAmount: ₹${body.amount}\nDescription: ${body.text}\nExpense Add By: ${LogUserName}`
+    ).catch((err) => console.error("Email send failed", err));
   } catch (error) {
     res.status(500).json({
       message: "Something Went wrong",
