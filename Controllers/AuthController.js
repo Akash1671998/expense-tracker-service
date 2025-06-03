@@ -7,26 +7,22 @@ const signup = async (req, res) => {
     const { name, email, password } = req.body;
     const user = await UserModel.findOne({ email });
     if (user) {
-      return res
-        .status(409)
-        .json({
-          message: "User is already exist, you can login",
-          success: false,
-        });
+      return res.status(409).json({
+        message: "User is already exist, you can login",
+        success: false,
+      });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const token = jwt.sign(
-      { email, name },
-      process.env.JWT_SECRET,
-      { expiresIn: "24h" }
-    );
+    const token = jwt.sign({ email, name }, process.env.JWT_SECRET, {
+      expiresIn: "24h",
+    });
     const userModel = new UserModel({
       name,
       email,
       password: hashedPassword,
       token,
-      role: "user"
+      role: "user",
     });
     userModel.password = await bcrypt.hash(password, 10);
     await userModel.save();
@@ -36,7 +32,7 @@ const signup = async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({
-      message: "Internal server errror",
+      message: "Internal server error",
       success: false,
     });
   }
@@ -44,7 +40,9 @@ const signup = async (req, res) => {
 
 const login = async (req, res) => {
   try {
+    debugger
     const { email, password } = req.body;
+    console.log("req.bodyreq.bodyreq.body",req.body)
     const user = await UserModel.findOne({ email });
     const errorMsg = "Auth failed: email or password is wrong";
     if (!user) {
@@ -59,6 +57,8 @@ const login = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "24h" }
     );
+    debugger
+
     res.status(200).json({
       message: "Login successful",
       success: true,
@@ -77,7 +77,6 @@ const login = async (req, res) => {
     });
   }
 };
-
 
 module.exports = {
   signup,
