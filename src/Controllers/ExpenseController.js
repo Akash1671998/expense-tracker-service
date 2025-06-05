@@ -4,13 +4,50 @@ const sendEmail = require("../Email");
 
 const fetchExpenses = async (req, res) => {
   const body = req.body;
+  const { text,amount,fromDate, toDate } = req.query;
   const LogUser = req.user._id;
   try {
     const userData = await UserModel.findById(LogUser).select("expense");
+    if (!userData) {
+      return res.status(500).json({
+        message: "User not found",
+        success: false,
+      });
+    }
+    let filteredExpenses = userData.expense;
+    if (text) {
+      const regex = new RegExp(text, "i");
+      filteredExpenses = filteredExpenses.filter(exp =>
+        regex.test(exp.text)
+      );
+    }
+
+    if (amount) {
+      filteredExpenses = filteredExpenses.filter(exp =>
+        exp.amount == amount
+      );
+    }
+    if (fromDate && toDate) {
+      const start = new Date(fromDate);
+      const end = new Date(toDate);
+      end.setHours(23, 59, 59, 999);
+
+      filteredExpenses = filteredExpenses.filter(exp => {
+        const createdAt = new Date(exp.createAt);
+        return createdAt >= start && createdAt <= end;
+      });
+    }
+    if (filteredExpenses.length === 0) {
+      return res.status(200).json({
+        message: "No Expenses Found",
+        success: false,
+        data: [],
+      });
+    }
     return res.status(200).json({
       message: "Get All Expenses Successfully",
       success: true,
-      data: userData?.expense,
+      data: filteredExpenses,
     });
   } catch (error) {
     res.status(500).json({
