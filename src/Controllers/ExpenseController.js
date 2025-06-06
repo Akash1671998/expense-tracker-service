@@ -2,9 +2,13 @@ const express = require("express");
 const UserModel = require("../Models/User");
 const sendEmail = require("../Email");
 
+const { Parser } = require("json2csv");
+const fs = require("fs");
+const path = require("path");
+
 const fetchExpenses = async (req, res) => {
   const body = req.body;
-  const { text,amount,fromDate, toDate } = req.query;
+  const { text, amount, fromDate, toDate } = req.query;
   const LogUser = req.user._id;
   try {
     const userData = await UserModel.findById(LogUser).select("expense");
@@ -17,22 +21,18 @@ const fetchExpenses = async (req, res) => {
     let filteredExpenses = userData.expense;
     if (text) {
       const regex = new RegExp(text, "i");
-      filteredExpenses = filteredExpenses.filter(exp =>
-        regex.test(exp.text)
-      );
+      filteredExpenses = filteredExpenses.filter((exp) => regex.test(exp.text));
     }
 
     if (amount) {
-      filteredExpenses = filteredExpenses.filter(exp =>
-        exp.amount == amount
-      );
+      filteredExpenses = filteredExpenses.filter((exp) => exp.amount == amount);
     }
     if (fromDate && toDate) {
       const start = new Date(fromDate);
       const end = new Date(toDate);
       end.setHours(23, 59, 59, 999);
 
-      filteredExpenses = filteredExpenses.filter(exp => {
+      filteredExpenses = filteredExpenses.filter((exp) => {
         const createdAt = new Date(exp.createAt);
         return createdAt >= start && createdAt <= end;
       });
@@ -124,4 +124,71 @@ const deleteExpenses = async (req, res) => {
   }
 };
 
-module.exports = { fetchExpenses, addExpenses, updateExpenses, deleteExpenses };
+// CSV File Download
+
+const exportExpensesToCSV = async (req, res) => {
+  const { text, amount, fromDate, toDate } = req.query;
+  const LogUser = req.user._id;
+
+  try {
+    const userData = await UserModel.findById(LogUser).select("expense");
+    if (!userData) {
+      return res.status(404).json({
+        message: "User not found",
+        success: false,
+      });
+    }
+
+    let filteredExpenses = userData.expense;
+
+    if (text) {
+      const regex = new RegExp(text, "i");
+      filteredExpenses = filteredExpenses.filter((exp) => regex.test(exp.text));
+    }
+
+    if (amount) {
+      filteredExpenses = filteredExpenses.filter((exp) => exp.amount == amount);
+    }
+
+    if (fromDate && toDate) {
+      const start = new Date(fromDate);
+      const end = new Date(toDate);
+      end.setHours(23, 59, 59, 999);
+      filteredExpenses = filteredExpenses.filter((exp) => {
+        const createdAt = new Date(exp.createAt);
+        return createdAt >= start && createdAt <= end;
+      });
+    }
+
+    if (filteredExpenses.length === 0) {
+      return res.status(200).json({
+        message: "No expenses found to export",
+        success: false,
+      });
+    }
+
+    // Fields you want in CSV
+    const fields = ["_id", "text", "amount", "createAt", "createdBy"];
+    const opts = { fields };
+    const parser = new Parser(opts);
+    const csv = parser.parse(filteredExpenses);
+
+    res.header("Content-Type", "text/csv");
+    res.attachment("expenses.csv");
+    return res.send(csv);
+  } catch (error) {
+    return res.status(500).json({
+      message: `Something went wrong while exporting CSV${error}`,
+      error: error,
+      success: false,
+    });
+  }
+};
+
+module.exports = {
+  fetchExpenses,
+  addExpenses,
+  updateExpenses,
+  deleteExpenses,
+  exportExpensesToCSV,
+};
