@@ -4,7 +4,7 @@ const UserModel = require("../Models/User");
 
 const signup = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password,role } = req.body;
     const user = await UserModel.findOne({ email });
     if (user) {
       return res.status(409).json({
@@ -22,7 +22,7 @@ const signup = async (req, res) => {
       email,
       password: hashedPassword,
       token,
-      role: "user",
+      role: role || "",
     });
     userModel.password = await bcrypt.hash(password, 10);
     await userModel.save();
@@ -30,7 +30,8 @@ const signup = async (req, res) => {
       message: "Signup successfully",
       success: true,
     });
-  } catch (err) {
+  } catch (error) {
+    console.log("???????????/",error)
     res.status(500).json({
       message: "Internal server error",
       success: false,
