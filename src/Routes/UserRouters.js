@@ -1,13 +1,13 @@
 const express = require("express");
 const router = express.Router();
-
-//const { fetchExpenses, addExpenses, updateExpenses, deleteExpenses, exportExpensesToCSV } = require("../Controllers/ExpenseController");
-const { getAllUser } = require("../Controllers/UserController");
+const {
+  getAllUser,
+  updateUser,
+  deleteUser,
+} = require("../Controllers/UserController");
 
 router.get("/list", getAllUser);
-// router.post("/create", addExpenses);
-// router.put("/update/:expenseId", updateExpenses);
-// router.delete("/delete/:expenseId", deleteExpenses);
-// router.get("/csv/export",exportExpensesToCSV);
+router.post("/update", updateUser);
+router.put("/delete/:userId", deleteUser);
 
 module.exports = router;
