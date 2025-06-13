@@ -9,13 +9,16 @@ const UserRouter = require("./Routes/UserRouters");
 
 const cors = require("cors");
 const { ensureAuthenticated } = require("./Middlewares/Auth");
+const createDefaultAdmin = require("./Middlewares/createDefault");
 const PORT = 9090;
 
 const app = express();
 
 app.use(bodyParser.json());
 app.use(cors());
-connectDB();
+connectDB().then(() => {
+    createDefaultAdmin();
+  });
 
 // FIXED: Added forward slashes in route paths
 app.use("/auth", AuthRouter);
@@ -24,5 +27,5 @@ app.use("/expense",ensureAuthenticated, ExpenseRouter);
 app.use("/users",ensureAuthenticated,UserRouter)
 
 app.listen(PORT, () => {
-    console.log(`Server Run on: ${PORT}`);
+    console.log("🚀 Server is running on port:", PORT);
 });

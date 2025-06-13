@@ -38,10 +38,8 @@ const updateUser = async (req, res) => {
       success: false,
     });
   }
-
   const { userId } = req.params;
   const { name, email, role } = req.body;
-
   try {
     const updatedUser = await UserModel.findByIdAndUpdate(
       userId,
@@ -72,12 +70,6 @@ const updateUser = async (req, res) => {
 
 const deleteUser = async (req, res) => {
   const userRole = req.user.role;
-  if (userRole !== "ROLE_ADMIN") {
-    return res.status(403).json({
-      message: "Access denied: Only admins can delete users",
-      success: false,
-    });
-  }
   const { userId } = req.params;
   try {
     const deletedUser = await UserModel.findByIdAndDelete(userId);
@@ -90,7 +82,6 @@ const deleteUser = async (req, res) => {
     return res.status(200).json({
       message: "User deleted successfully",
       success: true,
-      data: deletedUser,
     });
   } catch (error) {
     return res.status(500).json({
