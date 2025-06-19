@@ -81,11 +81,13 @@ const addExpenses = async (req, res) => {
       success: true,
       data: userData?.expense,
     });
-    sendEmail(
-      LogEmail,
-      "New Expense Added",
-      `You have successfully added a new expense to your account:\n\nAmount: ₹${body.amount}\nDescription: ${body.text}\nExpense Add By: ${LogUserName}`
-    ).catch((err) => console.error("Email send failed", err));
+    if(req.body.email==true){
+      sendEmail(
+        LogEmail,
+        "New Expense Added",
+        `You have successfully added a new expense to your account:\n\nAmount: ₹${body.amount}\nDescription: ${body.text}\nExpense Add By: ${LogUserName}`
+      ).catch((err) => console.error("Email send failed", err));
+    }
   } catch (error) {
     res.status(500).json({
       message: "Something Went wrong",
@@ -184,7 +186,6 @@ const exportExpensesToCSV = async (req, res) => {
     });
   }
 };
-
 module.exports = {
   fetchExpenses,
   addExpenses,
